@@ -14,12 +14,16 @@ Installing
 3. make && make install
 4. make clean (optional, removes binaries)
 5. Test by going into the erl shell and issuing:
+
     1> rsg:start().
     2> i().
 
 Testing
 -------
+
 Go on a host which has connection to the rsg host. Make sure that port 7000 is available:
+
     $ telnet $rsg_host 7000 
     $ ping
+
 You should receive a ping back.
