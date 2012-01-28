@@ -1,4 +1,4 @@
--module(sg).
+-module(rsg).
 -export([start/0, loop0/1, worker/2]).
 
 -define(PORTNO, 7000).
