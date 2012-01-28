@@ -1,5 +1,5 @@
 -module(rsg).
--export([start/0, loop0/1, worker/2]).
+-export([start/0, stop/1, loop0/1, worker/2]).
 
 -define(PORTNO, 7000).
 -define(POOL, 10).
@@ -8,6 +8,15 @@ start() ->
 	start(?PORTNO).
 start(Port) ->
 	spawn(?MODULE, loop0, [Port]).
+
+stop([Node]) ->
+	case rpc:call(Node, init, stop, []) of
+		{badrpc, Reason} ->
+			io:format("Failed to halt '~p' because ~p~n", [Node, Reason]);
+		_ ->
+			ok
+	end, 
+	init:stop().
 
 loop0(Port) ->
 	case gen_tcp:listen(Port, [binary, {packet, 0}, {active, false}]) of
