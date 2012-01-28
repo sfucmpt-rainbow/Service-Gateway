@@ -1,0 +1,23 @@
+#!/bin/sh
+
+ERL=/usr/bin/erl
+MODULE=rsg
+INIT=start
+HALT=stop
+NODE=rsg
+export HOME=/tmp
+
+case $1 in
+	start)
+		$ERL -boot start_clean -detached -sname $NODE -s $MODULE $INIT
+		echo "Starting RSG"
+		;;
+	stop)
+		$ERL -noshell -sname rsg_stopper -s $MODULE $HALT $NODE@localhost
+		;;
+	*)
+		echo "Usage: $0 {start|stop}"
+		exit 1
+esac
+
+exit 0
