@@ -1,22 +1,69 @@
-#!/bin/sh
+#!/bin/bash
+
+daemon_name=rsg
+
+. /etc/rc.conf
+. /etc/rc.d/functions
 
 ERL=/usr/bin/erl
 MODULE=rsg
 INIT=start
 HALT=stop
 NODE=rsg
+
+PIDFILE=/var/run/$daemon_name.pid
 export HOME=/tmp
+
+# 0 for stopped, 1 for running
+pid_alive() {
+	if [ -f $PIDFILE ]; then
+		if [ `ps --pid $(cat $PIDFILE) | wc -l` -eq 2 ]; then
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
+start() {
+	stat_busy "Starting RSG"
+	pid_alive
+	if [ $? -eq 0 ]; then
+		$ERL -boot start_clean -detached -sname $NODE -s $MODULE $INIT
+		echo `ps aux | grep 's rsg start' | awk 'FNR==1{print $2}'` > $PIDFILE
+		touch /run/daemons/$daemon_name
+	fi
+	stat_done
+}
+
+stop() {
+	stat_busy "Stopping RSG"
+	pid_alive
+	if [ $? -eq 1 ]; then
+		$ERL -noshell -sname rsg_stopper -s $MODULE $HALT $NODE@localhost
+		[ -f $PIDFILE ] && rm -f /var/run/rsg.pid
+		[ -f /run/daemons/$daemon_name ] && rm /run/daemons/$daemon_name
+	fi
+	stat_done
+}
 
 case $1 in
 	start)
-		$ERL -boot start_clean -detached -sname $NODE -s $MODULE $INIT
-		echo "Starting RSG"
+		start
 		;;
 	stop)
-		$ERL -noshell -sname rsg_stopper -s $MODULE $HALT $NODE@localhost
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	status)
+		stat_busy "Checking RSG status";
+		ck_status $daemon_name
 		;;
 	*)
-		echo "Usage: $0 {start|stop}"
+		echo "Usage: $0 {start|stop|status}"
 		exit 1
 esac
 
